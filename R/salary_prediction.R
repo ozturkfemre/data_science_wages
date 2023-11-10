@@ -1,3 +1,22 @@
+#################
+### Libraries ###
+#################
+
+library(corrplot)
+library(nortest)
+library(ISLR)
+library(Hmisc)
+library(caret)
+library(dplyr)
+library(ModelMetrics)
+library(lmtest)
+library(car)
+library(olsrr)
+library(tidyverse)
+library(moments)
+library(bestNormalize)
+library(magrittr)
+
 ###################
 ### Data Import ###
 ###################
@@ -173,5 +192,68 @@ ggplot(df, aes(x = "", fill = company_size)) +
   theme(legend.position = "bottom")
 
 
+################################################################################
+######################### Machine Learning Models ##############################
+################################################################################
 
+##########################
+### Train - Test Split ###
+##########################
+
+df <- df[-c(4,6)]
+str(df)
+
+smp_size <- floor(0.75 * nrow(df)) 
+set.seed(2021900444) 
+train_ind <- sample(nrow(df), size = smp_size, replace = FALSE)
+train <- df[train_ind, ]
+test <- df[-train_ind, ]
+
+#########################
+### Linear Regression ###
+#########################
+
+model1 <- lm(salary_in_usd ~ experience_level + employment_type + remote_ratio + company_size + job_category, data = train)
+summary(model1) # some variables are not significant
+
+########################
+### Assumption Check ###
+########################
+
+
+vif(model1) # no collinearity problem 
+
+
+# normality of residuals 
+
+fun <- dnorm(model1$residuals, mean = mean(model1$residuals), sd = sd(model1$residuals))
+
+hist(model1$residuals, ylab = "Density", xlab = "Residuals", col="burlywood2",
+     border="burlywood4", probability = T, ylim = c(0, max(fun)))
+
+
+lines(density(model1$residuals), col = 9, lwd = 2) # does not seem like normal
+
+shapiro.test(model1$residuals)
+
+
+# Homoscedasticity
+
+bptest(salary_in_usd ~ experience_level + employment_type + remote_ratio + company_size + job_category, data = train)
+
+
+
+par(mfrow = c(2,2))
+plot(model1)
+
+# errors
+predictions1 <- predict(model1,test)
+mae1 <- mae(predictions1, test$salary_in_usd)
+
+
+################################################################################
+
+#######################
+### Regression Tree ###
+#######################
 
