@@ -192,6 +192,9 @@ ggplot(df, aes(x = "", fill = company_size)) +
   theme(legend.position = "bottom")
 
 
+# Since salary_in_usd is not normal, it will affect regression models. Thus, i will log transform it.
+
+df$salary_in_usd <- log(df$salary_in_usd)
 ################################################################################
 ######################### Machine Learning Models ##############################
 ################################################################################
@@ -213,7 +216,8 @@ test <- df[-train_ind, ]
 ### Linear Regression ###
 #########################
 
-model1 <- lm(salary_in_usd ~ experience_level + employment_type + remote_ratio + company_size + job_category, data = train)
+
+model1 <- lm(log_salary ~ experience_level + employment_type + remote_ratio + company_size + job_category, data = train)
 summary(model1) # some variables are not significant
 
 ########################
@@ -256,4 +260,18 @@ mae1 <- mae(predictions1, test$salary_in_usd)
 #######################
 ### Regression Tree ###
 #######################
+
+library(rpart)
+library(rpart.plot)
+model2 <- rpart(salary_in_usd ~ experience_level + employment_type + remote_ratio + company_size + job_category, data = train)
+
+dev.off()
+rpart.plot(model2)
+
+
+
+# errors
+predictions2 <- predict(model2,test)
+mae2 <- mae(predictions2, test$salary_in_usd)
+
 
